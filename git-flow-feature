@@ -44,7 +44,7 @@ PREFIX=$(git config --get gitflow.prefix.feature)
 usage() {
 	echo "usage: git flow feature [list] [-v]"
 	echo "       git flow feature start [-F] <name> [<base>]"
-	echo "       git flow feature finish [-rFk] <name|nameprefix>"
+	echo "       git flow feature finish [-rFkm] <name|nameprefix>"
 	echo "       git flow feature publish <name>"
 	echo "       git flow feature track <name>"
 	echo "       git flow feature diff [<name|nameprefix>]"
@@ -231,6 +231,7 @@ cmd_finish() {
 	DEFINE_boolean fetch false "fetch from $ORIGIN before performing finish" F
 	DEFINE_boolean rebase false "rebase instead of merge" r
 	DEFINE_boolean keep false "keep branch after performing finish" k
+	DEFINE_boolean neverff false "create a merge commit, even if ff-able" m
 	parse_args "$@"
 	expand_nameprefix_arg
 
@@ -308,6 +309,11 @@ cmd_finish() {
 	# merge into BASE
 	git checkout "$DEVELOP_BRANCH"
 	if [ "$(git rev-list -n2 "$DEVELOP_BRANCH..$BRANCH" | wc -l)" -eq 1 ]; then
+		if flag neverff; then
+			git merge --no-ff "$BRANCH"
+		else
+			git merge --ff "$BRANCH"
+		fi
 		git merge --ff "$BRANCH"
 	else
 		git merge --no-ff "$BRANCH"
